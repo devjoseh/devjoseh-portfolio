@@ -12,14 +12,16 @@ type Technology = {
 
 export function TechStack() {
     const technologies: Technology[] = [
-        { name: "TypeScript", icon: "typescript", category: "language" },
+        { name: "HTML", icon: "html", category: "language" },
+        { name: "CSS", icon: "css", category: "language" },
         { name: "JavaScript", icon: "javascript", category: "language" },
+        { name: "TypeScript", icon: "typescript", category: "language" },
+        { name: "React", icon: "react", category: "language" },
         { name: "Node.js", icon: "nodejs", category: "framework" },
+        { name: "Next.js", icon: "next", category: "framework" },
         { name: "Discord.js", icon: "discordjs", category: "framework" },
         { name: "Python", icon: "python", category: "language" },
         { name: "Lua", icon: "lua", category: "language" },
-        { name: "HTML", icon: "html", category: "language" },
-        { name: "CSS", icon: "css", category: "language" },
         { name: "VS Code", icon: "vscode", category: "tool" },
         { name: "Figma", icon: "figma", category: "tool" },
         { name: "Replit", icon: "replit", category: "tool" },

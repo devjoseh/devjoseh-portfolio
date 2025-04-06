@@ -1,48 +1,55 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { fetchExperiences as fetchExperiencesDb } from "@/utils/actions/experience";
+import { Card, CardContent, ErrorMessage, LoadingSkeleton } from "@/components";
+import type { Experience } from "@/utils/types/experiences";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useState } from "react";
-
-type ExperienceItem = {
-    id: number;
-    title: string;
-    company: string;
-    period: string;
-    description: string;
-    icon: string;
-};
 
 export function Experience() {
-    const experiences: ExperienceItem[] = [
-        {
-            id: 1,
-            title: "Desenvolvedor de Back-End",
-            company: "Instituto AmiGu",
-            period: "2024 - Atualmente",
-            description:
-                "Desenvolvimento de bot para o discord usando typescript e supabase para gerenciamento de hackathons online de forma 100% automática e independente conectado a uma plataforma.",
-            icon: "💻",
-        },
-        {
-            id: 2,
-            title: "19ª Edição Expolog",
-            company: "Instituto AmiGu",
-            period: "Nov 2024",
-            description: "Trabalhei como desenvolvedor no EXPOLOG 2024, um dos mais importantes eventos de logística do país com projeção internacional. A primeira fase do evento foi realizada por meio da plataforma Discord nos dias 23 e 24 de novembro, onde ocorreram as mentorias, o networking e os anúncios. Foram 12 dias de desenvolvimento do bot, criado em TypeScript e utilizando o Firebase como banco de dados, que gerenciou todo o servidor, desde as identificações até as mentorias realizadas, além de outros sistemas.",
-            icon: "🚀",
-        },
-        {
-            id: 3,
-            title: "NestStore",
-            company: "Loja pessoal",
-            period: "2021 - 2024",
-            description: "Em outubro de 2021, criei uma loja em um servidor do Discord chamada NestStore, onde vendo, até os dias de hoje, os mais variados bots. Um dos maiores projetos vendidos foi um sistema de pagamento completo, utilizando o Mercado Pago, com sistemas de tickets, cupons, entrega automática e anti-fraude. Até o momento, a loja já vendeu mais de 50 projetos.",
-            icon: "🛒",
-        },
-    ];
-
+    const [experiences, setExperiences] = useState<Experience[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [hoveredId, setHoveredId] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetchExperiences();
+    }, []);
+
+    const fetchExperiences = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const data = await fetchExperiencesDb();
+            setExperiences(data || []);
+        } catch (err) {
+            console.error("Erro ao buscar experiências:", err);
+            setError(
+                "Não foi possível carregar as experiências. Verifique sua conexão e tente novamente."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if(experiences.length === 0 && !loading && !error) {
+        const experiences: Experience[] = [
+            {
+                id: 1,
+                title: "Desenvolvedor de Back-End",
+                company: "Instituto AmiGu",
+                period: "2024 - Atualmente",
+                description: "Desenvolvimento de bot para o discord usando typescript e supabase para gerenciamento de hackathons online de forma 100% automática e independente conectado a uma plataforma.",
+                icon: "💻",
+                order_index: 0,
+                created_at: new Date().toISOString(),
+                updated_at: null,
+            },
+        ];
+
+        setExperiences(experiences)
+    }
 
     return (
         <section id="experience" className="py-20 px-4 md:px-8 lg:px-16">
@@ -51,6 +58,14 @@ export function Experience() {
                     Experiência
                 </h2>
 
+                {loading ? (<LoadingSkeleton count={3} columns={1}/>
+                ) : error ? (
+                <ErrorMessage 
+                    message={error} 
+                    retryAction={fetchExperiences} 
+                    className="min-h-[200px] flex flex-col items-center justify-center" 
+                />
+                ) : (
                 <div className="space-y-8">
                     {experiences.map((exp) => (
                         <motion.div
@@ -64,7 +79,9 @@ export function Experience() {
                         >
                             <Card
                                 className={`border-0 overflow-hidden transition-all duration-300 ${
-                                    hoveredId === exp.id ? "bg-[#2C3953]" : "bg-[#1a2235]/70"
+                                    hoveredId === exp.id
+                                        ? "bg-[#2C3953]"
+                                        : "bg-[#1a2235]/70"
                                 }`}
                             >
                                 <CardContent className="p-0">
@@ -96,6 +113,7 @@ export function Experience() {
                         </motion.div>
                     ))}
                 </div>
+                )}
             </div>
         </section>
     );
