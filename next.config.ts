@@ -1,8 +1,9 @@
 module.exports = {
   images: {
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "skillicons.dev" },
-      { protocol: "https", hostname: `${process.env.NEXT_PUBLIC_SUPABASE_ID}.supabase.co` },
+      { protocol: "https", hostname: "**.supabase.co" },
     ],
     dangerouslyAllowSVG: true,
   },
