@@ -2,11 +2,7 @@ module.exports = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "skillicons.dev" },
-      {
-        protocol: 'https',
-        hostname: '*.supabase.co',
-        pathname: '/storage/v1/object/public/**'
-      },
+      { protocol: 'https', hostname: '*.supabase.co', pathname: '/storage/v1/object/public/**' },
     ],
     dangerouslyAllowSVG: true,
   },

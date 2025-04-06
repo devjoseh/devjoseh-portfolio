@@ -41,9 +41,7 @@ export function ExperiencesManager() {
             setExperiences(data || []);
         } catch (err) {
             console.error("Erro ao buscar experiências:", err);
-            setError(
-                "Não foi possível carregar as experiências. Tente novamente mais tarde."
-            );
+            setError("Não foi possível carregar as experiências. Tente novamente mais tarde.");
         } finally {
             setLoading(false);
         }
@@ -75,8 +73,8 @@ export function ExperiencesManager() {
                 : -1;
 
             const data = await createExperience(formData, maxOrderIndex);
-
             setExperiences((prev) => [...prev, data[0]]);
+
             resetForm();
             setIsCreating(false);
         } catch (err) {
@@ -100,7 +98,11 @@ export function ExperiencesManager() {
             await updateExperience(updateData, id);
 
             setExperiences((prev) => prev.map((experience) =>
-                experience.id === id ? { ...experience, ...formData, updated_at: new Date().toISOString() } : experience)
+                experience.id === id ? { 
+                    ...experience, 
+                    ...formData, 
+                    updated_at: new Date().toISOString() 
+                } : experience)
             );
 
             resetForm();
@@ -128,32 +130,6 @@ export function ExperiencesManager() {
             console.error("Erro ao excluir experiência:", err);
             setError("Não foi possível excluir a experiência. Tente novamente mais tarde.");
         }
-    };
-
-    const startEditing = (experience: Experience) => {
-        setFormData({
-            title: experience.title,
-            company: experience.company,
-            period: experience.period,
-            description: experience.description,
-            icon: experience.icon,
-        });
-
-        setIsEditing(experience.id);
-        setIsCreating(false);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-
-    const startCreating = () => {
-        resetForm();
-        setIsCreating(true);
-        setIsEditing(null);
-    };
-
-    const cancelAction = () => {
-        resetForm();
-        setIsCreating(false);
-        setIsEditing(null);
     };
 
     const moveExperience = async (id: number, direction: "up" | "down") => {
@@ -203,6 +179,32 @@ export function ExperiencesManager() {
             console.error("Erro ao reordenar experiências:", err);
             setError("Não foi possível reordenar as experiências. Tente novamente mais tarde.");
         }
+    };
+
+    const startEditing = (experience: Experience) => {
+        setFormData({
+            title: experience.title,
+            company: experience.company,
+            period: experience.period,
+            description: experience.description,
+            icon: experience.icon,
+        });
+
+        setIsEditing(experience.id);
+        setIsCreating(false);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const startCreating = () => {
+        resetForm();
+        setIsCreating(true);
+        setIsEditing(null);
+    };
+
+    const cancelAction = () => {
+        resetForm();
+        setIsCreating(false);
+        setIsEditing(null);
     };
 
     if (loading) {

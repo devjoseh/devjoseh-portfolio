@@ -117,6 +117,7 @@ export type Database = {
           id: number
           image_url: string
           links: ProjectLink[]
+          order_index: number
           tags: string[]
           title: string
           updated_at: string | null
@@ -127,6 +128,7 @@ export type Database = {
           id?: number
           image_url: string
           links?: ProjectLink[]
+          order_index?: number
           tags?: string[]
           title: string
           updated_at?: string | null
@@ -137,6 +139,7 @@ export type Database = {
           id?: number
           image_url?: string
           links?: ProjectLink[]
+          order_index?: number
           tags?: string[]
           title?: string
           updated_at?: string | null

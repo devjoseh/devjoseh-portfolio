@@ -2,7 +2,7 @@
 
 import { fetchProjects as fetchProjectsDb, createProject, updateProject, deleteProject,} from "@/utils/actions/project";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Pencil, Plus, Save, Trash2, X, ExternalLink, Github, LinkIcon } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X, ExternalLink, Github, LinkIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Button, Label, Input, Textarea, LoadingSpinner } from "@/components/index";
 import { ProjectLinksManager } from "./project-links-manager";
 import { Project, ProjectLink } from "@/utils/types/projects";
@@ -25,7 +25,7 @@ export function ProjectsManager() {
 
     // Form state
     const [formData, setFormData] = useState<
-        Omit<Project, "id" | "created_at" | "updated_at">
+        Omit<Project, "id" | "created_at" | "updated_at" | "order_index">
     >({
         title: "",
         description: "",
@@ -97,9 +97,19 @@ export function ProjectsManager() {
         }
 
         try {
-            const data = await createProject(formData);
-            setProjects((prev) => [...prev, data[0]]);
+            // Determinar o maior order_index atual
+            const maxOrderIndex = projects.length > 0
+            ? Math.max(...projects.map((exp) => exp.order_index))
+            : -1;
 
+            const updateData = {
+                ...formData,
+                order_index: maxOrderIndex
+            }
+                        
+            const data = await createProject(updateData);
+            setProjects((prev) => [...prev, data[0]]);
+            
             resetForm();
             setIsCreating(false);
         } catch (err) {
@@ -117,10 +127,12 @@ export function ProjectsManager() {
         try {
             await updateProject(formData, id);
 
-            setProjects((prev) =>
-                prev.map((project) =>
-                    project.id === id ? { ...project, ...formData, updated_at: new Date().toISOString() } : project
-                )
+            setProjects((prev) => prev.map((project) =>
+                project.id === id ? { 
+                    ...project, 
+                    ...formData, 
+                    updated_at: new Date().toISOString() 
+                } : project)
             );
 
             resetForm();
@@ -138,9 +150,57 @@ export function ProjectsManager() {
             await deleteProject(id);
 
             setProjects((prev) => prev.filter((project) => project.id !== id));
+            reorderProjects()
         } catch (err) {
             console.error("Erro ao excluir projeto:", err);
             setError("Não foi possível excluir o projeto. Tente novamente mais tarde.");
+        }
+    };
+
+    const moveProject = async (id: number, direction: "up" | "down") => {
+        const currentIndex = projects.findIndex((exp) => exp.id === id);
+        if (currentIndex === -1) return;
+
+        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+        // Verificar se o novo índice é válido
+        if (newIndex < 0 || newIndex >= projects.length) return;
+
+        // Trocar as posições
+        const newProjects = [...projects];
+        const temp = newProjects[currentIndex].order_index;
+        newProjects[currentIndex].order_index = newProjects[newIndex].order_index;
+        newProjects[newIndex].order_index = temp;
+
+        // Ordenar pelo order_index
+        newProjects.sort((a, b) => a.order_index - b.order_index);
+
+        // Atualizar o estado
+        setProjects(newProjects);
+
+        try {
+            setError(null);
+            await updateProject({ order_index: newProjects[currentIndex].order_index }, newProjects[currentIndex].id)
+            await updateProject({ order_index: newProjects[newIndex].order_index }, newProjects[newIndex].id)
+        } catch (err) {
+            console.error("Erro ao reordenar projetos:", err);
+            setError("Não foi possível reordenar os projetos. Tente novamente mais tarde.");
+
+            // Reverter as mudanças em caso de erro
+            fetchProjects();
+        }
+    };
+
+    const reorderProjects = async () => {
+        try {
+            for (let i = 0; i < projects.length; i++) {
+                await updateProject({ order_index: i }, projects[i].id);
+            }
+
+            fetchProjects();
+        } catch (err) {
+            console.error("Erro ao reordenar projetos:", err);
+            setError("Não foi possível reordenar os projetos. Tente novamente mais tarde.");
         }
     };
 
@@ -286,7 +346,7 @@ export function ProjectsManager() {
                         </Button>
                     </div>
                 ) : (
-                    projects.map((project) => (
+                    projects.map((project, index) => (
                         <Card key={project.id} className="border-0 bg-[#2C3953]/50 overflow-hidden">
                             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
                                 <div className="aspect-video md:aspect-square overflow-hidden bg-[#1a2235]">
@@ -336,6 +396,24 @@ export function ProjectsManager() {
                                     )}
 
                                     <div className="flex justify-end gap-2 mt-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => moveProject(project.id,"up")}
+                                            disabled={index === 0}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <ChevronUp className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => moveProject(project.id, "down")}
+                                            disabled={index === projects.length - 1}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <ChevronDown className="h-4 w-4" />
+                                        </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
