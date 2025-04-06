@@ -411,7 +411,7 @@ export function ExperiencesManager() {
                                             {experience.description}
                                         </p>
 
-                                        <div className="flex justify-between items-center mt-4">
+                                        <div className="flex justify-end items-center mt-4">
                                             <div className="flex gap-2">
                                                 <Button
                                                     variant="outline"
@@ -431,9 +431,6 @@ export function ExperiencesManager() {
                                                 >
                                                     <ChevronDown className="h-4 w-4" />
                                                 </Button>
-                                            </div>
-
-                                            <div className="flex gap-2">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

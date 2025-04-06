@@ -3,7 +3,7 @@
 import { fetchHackathons as fetchHackathonsDb, createHackathon, updateHackathon, deleteHackathon } from '@/utils/actions/hackathon'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, Label, Input, Textarea, LoadingSpinner } from "@/components/index";
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
 import type { Hackathon } from '@/utils/types/hackathons';
 import { useState, useEffect } from "react";
 import ImageUpload from "./image-upload";
@@ -17,7 +17,7 @@ export function HackathonsManager() {
     const [isCreating, setIsCreating] = useState(false);
 
     const [formData, setFormData] = useState<
-        Omit<Hackathon, "id" | "created_at" | "updated_at">
+        Omit<Hackathon, "id" | "created_at" | "order_index">
     >({
         title: "",
         banner_url: "",
@@ -92,7 +92,10 @@ export function HackathonsManager() {
             await updateHackathon(formData, id)
 
             setHackathons((prev) =>
-                prev.map((hackathon) => hackathon.id === id ? { ...hackathon, ...formData, updated_at: new Date().toISOString() } : hackathon)
+                prev.map((hackathon) => hackathon.id === id ? { 
+                    ...hackathon, 
+                    ...formData 
+                } : hackathon)
             );
 
             resetForm();
@@ -109,9 +112,60 @@ export function HackathonsManager() {
         try {
             await deleteHackathon(id)
             setHackathons((prev) => prev.filter((hackathon) => hackathon.id !== id));
+
+            reorderHackathons()
         } catch (err) {
             console.error("Erro ao excluir hackathon:", err);
             setError("Não foi possível excluir o hackathon. Tente novamente mais tarde.");
+        }
+    };
+
+    const moveHackathon = async (id: number, direction: "up" | "down") => {
+        const currentIndex = hackathons.findIndex((exp) => exp.id === id);
+        if (currentIndex === -1) return;
+
+        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+        // Verificar se o novo índice é válido
+        if (newIndex < 0 || newIndex >= hackathons.length) return;
+
+        // Trocar as posições
+        const newHackathons = [...hackathons];
+        const temp = newHackathons[currentIndex].order_index;
+        newHackathons[currentIndex].order_index = newHackathons[newIndex].order_index;
+        newHackathons[newIndex].order_index = temp;
+
+        // Ordenar pelo order_index
+        newHackathons.sort((a, b) => a.order_index - b.order_index);
+
+        // Atualizar o estado
+        setHackathons(newHackathons);
+
+        try {
+            setError(null);
+            await Promise.all([
+                updateHackathon({ order_index: newHackathons[currentIndex].order_index }, newHackathons[currentIndex].id),
+                updateHackathon({ order_index: newHackathons[newIndex].order_index }, newHackathons[newIndex].id)
+            ])
+        } catch (err) {
+            console.error("Erro ao reordenar hackathons:", err);
+            setError("Não foi possível reordenar os hackathons. Tente novamente mais tarde.");
+
+            // Reverter as mudanças em caso de erro
+            fetchHackathons();
+        }
+    };
+
+    const reorderHackathons = async () => {
+        try {
+            for (let i = 0; i < hackathons.length; i++) {
+                await updateHackathon({ order_index: i }, hackathons[i].id);
+            }
+
+            fetchHackathons();
+        } catch (err) {
+            console.error("Erro ao reordenar hackathons:", err);
+            setError("Não foi possível reordenar os hackathons. Tente novamente mais tarde.");
         }
     };
 
@@ -262,7 +316,7 @@ export function HackathonsManager() {
                         </Button>
                     </div>
                 ) : (
-                    hackathons.map((hackathon) => (
+                    hackathons.map((hackathon, index) => (
                         <Card key={hackathon.id} className="border-0 bg-[#2C3953]/50 overflow-hidden">
                             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-4">
                                 <div className="aspect-video md:aspect-square overflow-hidden bg-[#1a2235]">
@@ -295,6 +349,24 @@ export function HackathonsManager() {
                                     </p>
 
                                     <div className="flex justify-end gap-2 mt-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => moveHackathon(hackathon.id,"up")}
+                                            disabled={index === 0}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <ChevronUp className="h-4 w-4" />
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => moveHackathon(hackathon.id, "down")}
+                                            disabled={index === hackathons.length - 1}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <ChevronDown className="h-4 w-4" />
+                                        </Button>
                                         <Button variant="outline" size="sm" onClick={() => startEditing(hackathon)} className="gap-1">
                                             <Pencil className="h-3 w-3" />
                                             Editar

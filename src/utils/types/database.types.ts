@@ -54,9 +54,9 @@ export type Database = {
           date: string
           description: string
           id: number
+          order_index: number
           result: string | null
           title: string
-          updated_at: string | null
         }
         Insert: {
           banner_url: string
@@ -64,9 +64,9 @@ export type Database = {
           date: string
           description: string
           id?: number
+          order_index?: number
           result?: string | null
           title: string
-          updated_at?: string | null
         }
         Update: {
           banner_url?: string
@@ -74,9 +74,9 @@ export type Database = {
           date?: string
           description?: string
           id?: number
+          order_index?: number
           result?: string | null
           title?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
