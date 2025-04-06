@@ -33,23 +33,6 @@ export function Hackathons() {
         fetchHackathons()
     }, [])
 
-    if (hackathons.length === 0 && !loading && !error) {
-        const staticHackathons: Hackathon[] = [
-            {
-                id: 1,
-                title: "Campeão The Schools Challenge",
-                banner_url: "/banner_tsc.webp",
-                description:"Fui campeão da 5ª Edição do The Schools Challenge, organizado por JPMorgan Chase e Ideias de Futuro. Primeiramente, quero agradecer, do fundo do meu coração, aos nossos mentores Caio Monteiro Prado, Matheus Apalosqui da Fé e Edgar Pires. Sem eles, não teríamos chegado onde chegamos. Eles foram, e continuarão sendo, os melhores mentores que já tive. Também agradecer toda a minha equipe pelo trabalho incrível que fizemos até chegar ao top 1. Foram meses pensando em melhorias, otimizações, desistimos de várias ideias e conseguimos criar um projeto realmente incrível. Ganhar a 5ª Edição do The Schools Challenge não é só uma conquista como também uma experiência pra vida. O projeto foi criado pensando em todos os adolescentes e adultos que desejam um futuro mais digno. Por isso, desenvolvemos o Retention, um aplicativo que utiliza inteligência artificial para automatizar revisões periódicas por meio de flashcards, exercícios e resumos, além de ser totalmente acessível para pessoas com deficiência física.",
-                date: "Dezembro 2024",
-                result: "1º Lugar",
-                created_at: new Date().toISOString(),
-                updated_at: null,
-            }
-        ];
-
-        setHackathons(staticHackathons)
-    }
-
     return (
         <section id="hackathons" className="py-20 px-4 md:px-8 lg:px-16">
             <div className="max-w-7xl mx-auto">
@@ -57,13 +40,20 @@ export function Hackathons() {
                     Hackathons
                 </h2>
 
-                {loading ? (<LoadingSkeleton count={6} columns={3}/>
-                ) : error ? (
-                <ErrorMessage 
-                    message={error} 
-                    retryAction={fetchHackathons} 
-                    className="min-h-[200px] flex flex-col items-center justify-center" 
-                />
+                {loading ? (<LoadingSkeleton count={6} columns={3}/>) 
+                : hackathons.length === 0 ? (
+                    <ErrorMessage 
+                        message="Ainda não há hackathons cadastrados."
+                        retryAction={fetchHackathons} 
+                        className="min-h-[200px] flex flex-col items-center justify-center" 
+                    />
+                ) 
+                : error ? (
+                    <ErrorMessage 
+                        message={error} 
+                        retryAction={fetchHackathons} 
+                        className="min-h-[200px] flex flex-col items-center justify-center" 
+                    />
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         {hackathons.map((hackathon) => (
@@ -104,6 +94,7 @@ export function Hackathons() {
                         ))}
                     </div>
                 )}
+            
 
                 {/* Hackathon Modal */}
                 <Dialog open={!!selectedHackathon} onOpenChange={(open) => !open && setSelectedHackathon(null)}>

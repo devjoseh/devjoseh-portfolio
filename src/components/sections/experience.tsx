@@ -33,24 +33,6 @@ export function Experience() {
         }
     };
 
-    if(experiences.length === 0 && !loading && !error) {
-        const experiences: Experience[] = [
-            {
-                id: 1,
-                title: "Desenvolvedor de Back-End",
-                company: "Instituto AmiGu",
-                period: "2024 - Atualmente",
-                description: "Desenvolvimento de bot para o discord usando typescript e supabase para gerenciamento de hackathons online de forma 100% automática e independente conectado a uma plataforma.",
-                icon: "💻",
-                order_index: 0,
-                created_at: new Date().toISOString(),
-                updated_at: null,
-            },
-        ];
-
-        setExperiences(experiences)
-    }
-
     return (
         <section id="experience" className="py-20 px-4 md:px-8 lg:px-16">
             <div className="max-w-7xl mx-auto">
@@ -58,14 +40,21 @@ export function Experience() {
                     Experiência
                 </h2>
 
-                {loading ? (<LoadingSkeleton count={3} columns={1}/>
-                ) : error ? (
+                {loading ? (<LoadingSkeleton count={3} columns={1}/>)
+                : experiences.length === 0 ? (
+                    <ErrorMessage 
+                        message="Ainda não há experiências cadastradas."
+                        retryAction={fetchExperiences} 
+                        className="min-h-[200px] flex flex-col items-center justify-center" 
+                    />
+                )  
+                : error ? (
                 <ErrorMessage 
                     message={error} 
                     retryAction={fetchExperiences} 
                     className="min-h-[200px] flex flex-col items-center justify-center" 
-                />
-                ) : (
+                />) 
+                : (
                 <div className="space-y-8">
                     {experiences.map((exp) => (
                         <motion.div

@@ -46,25 +46,6 @@ export function Projects() {
         fetchProjects()
     }, [])
 
-    if(projects.length === 0 && !loading && !error) {
-        const projects: Project[] = [
-            {
-                id: 1,
-                title: "EducaAvalia",
-                description: "Um aplicativo de avaliações de escolas inclusivas e acessíveis para pessoas com deficiência física.",
-                image_url: "/proj_educaavalia.svg",
-                tags: [ "React Native", "TypeScript", "Tailwind CSS", "Supabase" ],
-                links: [
-                    { name: "Protótipo V2", url: "https://www.figma.com/proto/ruZ0jXdF0mGWtSZ2ScXdDL?node-id=0-1&t=lTd0aouf0piv1bAk-6", icon: "external" }
-                ],
-                created_at: new Date().toISOString(),
-                updated_at: null,
-            }
-        ];
-
-        setProjects(projects)
-    }
-
     return (
         <section id="projects" className="py-20 px-4 md:px-8 lg:px-16 bg-[#1a2235]">
             <div className="max-w-7xl mx-auto">
@@ -72,14 +53,22 @@ export function Projects() {
                     Projetos
                 </h2>
 
-                {loading ? (<LoadingSkeleton count={4} columns={2}/>
-                ) : error ? (
+                {loading ? (<LoadingSkeleton count={4} columns={2}/>) 
+                : projects.length === 0 ? (
+                    <ErrorMessage 
+                        message="Ainda não há projetos cadastrados."
+                        retryAction={fetchProjects} 
+                        className="min-h-[200px] flex flex-col items-center justify-center" 
+                    />
+                ) 
+                : error ? (
                 <ErrorMessage 
                     message={error} 
                     retryAction={fetchProjects} 
                     className="min-h-[200px] flex flex-col items-center justify-center" 
                 />
-                ) : (  
+                ) 
+                : ( 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
                     {projects.map((project) => (
                         <motion.div
