@@ -1,10 +1,10 @@
 "use client";
 
 import { ExternalLink, Github, LinkIcon, FileText, Instagram, Database, Newspaper, Youtube, Linkedin, Mail } from "lucide-react"
-import { fetchProjects as fetchProjectsDb } from "@/utils/actions/project";
+import { fetchProjects as fetchProjectsDb, parseProject } from "@/utils/actions/project";
 import { LoadingSkeleton, ErrorMessage } from "@/components/index";
 import { Card, CardContent, Button } from "@/components/index"
-import type { Project } from "@/utils/types/projects";
+import type { CustomProject } from "@/utils/types/projects";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from 'next/image'
@@ -23,7 +23,7 @@ const iconMap: Record<string, React.ReactNode> = {
 }
 
 export function Projects() {
-    const [projects, setProjects] = useState<Project[]>([])
+    const [projects, setProjects] = useState<CustomProject[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [hoveredId, setHoveredId] = useState<number | null>(null)
@@ -33,7 +33,7 @@ export function Projects() {
             setLoading(true)
 
             const data = await fetchProjectsDb()
-            setProjects(data || [])
+            setProjects(data.map(parseProject))
         } catch (err) {
             console.error("Erro ao buscar projetos:", err)
             setError("Não foi possível carregar os projetos.")

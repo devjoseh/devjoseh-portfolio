@@ -1,11 +1,10 @@
 "use client";
 
-import { fetchProjects as fetchProjectsDb, createProject, updateProject, deleteProject,} from "@/utils/actions/project";
+import { fetchProjects as fetchProjectsDb, createProject, updateProject, deleteProject, prepareProjectForDB, parseProject } from "@/utils/actions/project";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, Plus, Save, Trash2, X, ExternalLink, Github, LinkIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Button, Label, Input, Textarea, LoadingSpinner } from "@/components/index";
-import type { CustomProject, Project, ProjectLink } from "@/utils/types/projects";
-import { Json } from "@/utils/types/database.types";
+import type { CustomProject, ProjectLink } from "@/utils/types/projects";
 import { ProjectLinksManager } from "./project-links-manager";
 import { useState, useEffect } from "react";
 import ImageUpload from "./image-upload";
@@ -15,19 +14,6 @@ const iconMap: Record<string, React.ReactNode> = {
     link: <LinkIcon size={12} />,
     github: <Github size={12} />,
     external: <ExternalLink size={12} />,
-};
-
-const isProjectLink = (link: any): link is ProjectLink => {
-    return typeof link === 'object' && 
-        link !== null &&
-        'name' in link && 
-        'url' in link && 
-        'icon' in link;
-};
-  
-const safeLinksParse = (links: Json): ProjectLink[] => {
-    if (!links || !Array.isArray(links)) return [];
-    return links.filter(isProjectLink);
 };
 
 export function ProjectsManager() {
@@ -51,19 +37,6 @@ export function ProjectsManager() {
 
     const [imageUploaded, setImageUploaded] = useState(false);
     const [tagsInput, setTagsInput] = useState<string>("")
-
-    const parseProject = (project: Project): CustomProject => ({
-        ...project,
-        links: safeLinksParse(project.links)
-    });
-    
-    const prepareProjectForDB = (
-        project: Omit<CustomProject, "id" | "created_at">
-    ): Omit<Project, "id" | "created_at"> => ({
-        ...project,
-        links: project.links as unknown as Json,
-        order_index: project.order_index ?? 0, // Garante um valor padrão
-    });
 
     useEffect(() => {
         fetchProjects();
