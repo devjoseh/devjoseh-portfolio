@@ -51,29 +51,3 @@ export async function deleteProject(id:number) {
     if (error) throw error;
     return true;  
 }
-
-export const isProjectLink = (link: any): link is ProjectLink => {
-    return typeof link === 'object' && 
-        link !== null &&
-        'name' in link && 
-        'url' in link && 
-        'icon' in link;
-};
-
-export const safeLinksParse = (links: Json): ProjectLink[] => {
-    if (!links || !Array.isArray(links)) return [];
-    return links.filter(isProjectLink);
-};
-
-export const parseProject = (project: Project): CustomProject => ({
-    ...project,
-    links: safeLinksParse(project.links)
-});
-
-export const prepareProjectForDB = (
-    project: Omit<CustomProject, "id" | "created_at">
-): Omit<Project, "id" | "created_at"> => ({
-    ...project,
-    links: project.links as unknown as Json,
-    order_index: project.order_index ?? 0,
-});

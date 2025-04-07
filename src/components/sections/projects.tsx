@@ -1,10 +1,11 @@
 "use client";
 
 import { ExternalLink, Github, LinkIcon, FileText, Instagram, Database, Newspaper, Youtube, Linkedin, Mail } from "lucide-react"
-import { fetchProjects as fetchProjectsDb, parseProject } from "@/utils/actions/project";
+import { fetchProjects as fetchProjectsDb } from "@/utils/actions/project";
+import type { CustomProject, Project } from "@/utils/types/projects";
 import { LoadingSkeleton, ErrorMessage } from "@/components/index";
 import { Card, CardContent, Button } from "@/components/index"
-import type { CustomProject } from "@/utils/types/projects";
+import { safeLinksParse } from "../admin/projects-manager";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Image from 'next/image'
@@ -27,6 +28,11 @@ export function Projects() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [hoveredId, setHoveredId] = useState<number | null>(null)
+
+    const parseProject = (project: Project): CustomProject => ({
+        ...project,
+        links: safeLinksParse(project.links)
+    });
 
     const fetchProjects = async () => {
         try {

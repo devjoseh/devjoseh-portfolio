@@ -1,11 +1,12 @@
 "use client";
 
-import { fetchProjects as fetchProjectsDb, createProject, updateProject, deleteProject, prepareProjectForDB, parseProject } from "@/utils/actions/project";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchProjects as fetchProjectsDb, createProject, updateProject, deleteProject } from "@/utils/actions/project";
 import { Pencil, Plus, Save, Trash2, X, ExternalLink, Github, LinkIcon, ChevronUp, ChevronDown } from "lucide-react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, Label, Input, Textarea, LoadingSpinner } from "@/components/index";
-import type { CustomProject, ProjectLink } from "@/utils/types/projects";
+import type { CustomProject, Project, ProjectLink } from "@/utils/types/projects";
 import { ProjectLinksManager } from "./project-links-manager";
+import type { Json } from "@/utils/types/database.types";
 import { useState, useEffect } from "react";
 import ImageUpload from "./image-upload";
 import Image from "next/image";
@@ -14,6 +15,19 @@ const iconMap: Record<string, React.ReactNode> = {
     link: <LinkIcon size={12} />,
     github: <Github size={12} />,
     external: <ExternalLink size={12} />,
+};
+
+export const isProjectLink = (link: any): link is ProjectLink => {
+    return typeof link === 'object' && 
+        link !== null &&
+        'name' in link && 
+        'url' in link && 
+        'icon' in link;
+};
+
+export const safeLinksParse = (links: Json): ProjectLink[] => {
+    if (!links || !Array.isArray(links)) return [];
+    return links.filter(isProjectLink);
 };
 
 export function ProjectsManager() {
@@ -25,18 +39,31 @@ export function ProjectsManager() {
 
     // Form state
     const [formData, setFormData] = useState<
-    Omit<CustomProject, "id" | "created_at">
-  >({
-      title: "",
-      description: "",
-      image_url: "",
-      tags: [],
-      links: [],
-      order_index: 0,
-  });
+        Omit<CustomProject, "id" | "created_at">
+    >({
+        title: "",
+        description: "",
+        image_url: "",
+        tags: [],
+        links: [],
+        order_index: 0,
+    });
 
     const [imageUploaded, setImageUploaded] = useState(false);
     const [tagsInput, setTagsInput] = useState<string>("")
+
+    const parseProject = (project: Project): CustomProject => ({
+        ...project,
+        links: safeLinksParse(project.links)
+    });
+    
+    const prepareProjectForDB = (
+        project: Omit<CustomProject, "id" | "created_at">
+    ): Omit<Project, "id" | "created_at"> => ({
+        ...project,
+        links: project.links as unknown as Json,
+        order_index: project.order_index ?? 0,
+    });
 
     useEffect(() => {
         fetchProjects();
