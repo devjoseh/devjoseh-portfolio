@@ -1,6 +1,6 @@
 "use client";
 
-import { fetchExperiences as fetchExperiencesDb, createExperience, updateExperience, deleteExperience, updateItems } from "@/utils/actions/experience";
+import { fetchExperiences as fetchExperiencesDb, createExperience, updateExperience, deleteExperience } from "@/utils/actions/experience";
 import { Button, Input, Label, Textarea, ErrorMessage, Popover, PopoverContent, PopoverTrigger, LoadingSpinner } from "@/components";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pencil, Trash2, Save, X, ChevronUp, ChevronDown } from "lucide-react";
@@ -52,28 +52,22 @@ export function ExperiencesManager() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const resetForm = () => {
-        setFormData({
-            title: "",
-            company: "",
-            period: "",
-            description: "",
-            icon: "💻",
-        });
-    };
-
     const handleCreateExperience = async () => {
         try {
             setIsSaving(true);
             setError(null);
 
-            // Determinar o maior order_index atual
             const maxOrderIndex = experiences.length > 0
                 ? Math.max(...experiences.map((exp) => exp.order_index))
                 : -1;
 
-            const data = await createExperience(formData, maxOrderIndex);
-            setExperiences((prev) => [...prev, data[0]]);
+            const createData = {
+                ...formData,
+                order_index: maxOrderIndex + 1
+            }
+
+            const data = await createExperience(createData);
+            setExperiences((prev) => [data[0], ...prev]);
 
             resetForm();
             setIsCreating(false);
@@ -91,8 +85,7 @@ export function ExperiencesManager() {
             setError(null);
 
             const updateData = {
-                ...formData,
-                updated_at: new Date().toISOString(),
+                ...formData
             };
 
             await updateExperience(updateData, id);
@@ -100,8 +93,7 @@ export function ExperiencesManager() {
             setExperiences((prev) => prev.map((experience) =>
                 experience.id === id ? { 
                     ...experience, 
-                    ...formData, 
-                    updated_at: new Date().toISOString() 
+                    ...formData
                 } : experience)
             );
 
@@ -148,17 +140,15 @@ export function ExperiencesManager() {
         newExperiences[newIndex].order_index = temp;
 
         // Ordenar pelo order_index
-        newExperiences.sort((a, b) => a.order_index - b.order_index);
+        newExperiences.sort((a, b) => b.order_index - a.order_index);
 
         // Atualizar o estado
         setExperiences(newExperiences);
 
         try {
             setError(null);
-            await updateItems(
-                { order: newExperiences[currentIndex].order_index, id: newExperiences[currentIndex].id },
-                { order: newExperiences[newIndex].order_index, id: newExperiences[newIndex].id }
-            );
+            await updateExperience({ order_index: newExperiences[currentIndex].order_index }, newExperiences[currentIndex].id);
+            await updateExperience({ order_index: newExperiences[newIndex].order_index }, newExperiences[newIndex].id);
         } catch (err) {
             console.error("Erro ao reordenar experiências:", err);
             setError("Não foi possível reordenar as experiências. Tente novamente mais tarde.");
@@ -170,8 +160,10 @@ export function ExperiencesManager() {
 
     const reorderExperiences = async () => {
         try {
-            for (let i = 0; i < experiences.length; i++) {
-                await updateExperience({ order_index: i }, experiences[i].id);
+            const sortedExperiences = [...experiences].sort((a, b) => b.order_index - a.order_index);
+        
+            for (let i = 0; i < sortedExperiences.length; i++) {
+                await updateExperience({ order_index: sortedExperiences.length - 1 - i }, sortedExperiences[i].id);
             }
 
             fetchExperiences();
@@ -193,6 +185,16 @@ export function ExperiencesManager() {
         setIsEditing(experience.id);
         setIsCreating(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const resetForm = () => {
+        setFormData({
+            title: "",
+            company: "",
+            period: "",
+            description: "",
+            icon: "💻",
+        });
     };
 
     const startCreating = () => {

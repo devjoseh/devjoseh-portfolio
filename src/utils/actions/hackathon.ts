@@ -3,31 +3,24 @@
 import { createClient } from "@/utils/supabase/server";
 import { Hackathon } from "../types/hackathons";
 
-type FormData = Omit<Hackathon, "created_at" | "id" | "order_index">
-
 export async function fetchHackathons(): Promise<Hackathon[]> {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from("hackathons")
         .select()
-        .order("order_index", { ascending: true })
-        .order("created_at", { ascending: false })
+        .order("order_index", { ascending: false })
 
     if (error) throw error;
     return data;
 }
 
-export async function createHackathon(formData:FormData) {
+export async function createHackathon(formData:any) {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from("hackathons")
-        .insert([
-            {
-                ...formData
-            },
-        ])
+        .insert(formData)
         .select();
     
     if (error) throw error;

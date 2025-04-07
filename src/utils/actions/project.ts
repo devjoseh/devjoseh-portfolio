@@ -1,16 +1,14 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-import { Project } from "../types/projects";
 
-export async function fetchProjects(): Promise<Project[]> {
+export async function fetchProjects() {
     const supabase = await createClient();
 
     const { data, error } = await supabase
         .from("projects")
         .select()
-        .order("order_index", { ascending: true })
-        .order("created_at", { ascending: false })
+        .order("order_index", { ascending: false })
 
     if (error) throw error;
     return data;

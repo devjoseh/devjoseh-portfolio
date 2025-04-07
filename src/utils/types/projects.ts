@@ -12,3 +12,8 @@ export interface ProjectLinksManagerProps {
     links: ProjectLink[];
     onChange: (links: ProjectLink[]) => void;
 }
+
+export type CustomProject = Omit<Project, 'links'> & {
+    links: ProjectLink[];
+};
+

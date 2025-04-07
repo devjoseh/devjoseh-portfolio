@@ -1,5 +1,3 @@
-import { ProjectLink } from "./projects"
-
 export type Json =
   | string
   | number
@@ -21,7 +19,6 @@ export type Database = {
           order_index: number
           period: string
           title: string
-          updated_at: string | null
         }
         Insert: {
           company: string
@@ -32,7 +29,6 @@ export type Database = {
           order_index?: number
           period: string
           title: string
-          updated_at?: string | null
         }
         Update: {
           company?: string
@@ -43,14 +39,13 @@ export type Database = {
           order_index?: number
           period?: string
           title?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
       hackathons: {
         Row: {
           banner_url: string
-          created_at: string | null
+          created_at: string
           date: string
           description: string
           id: number
@@ -60,7 +55,7 @@ export type Database = {
         }
         Insert: {
           banner_url: string
-          created_at?: string | null
+          created_at?: string
           date: string
           description: string
           id?: number
@@ -70,7 +65,7 @@ export type Database = {
         }
         Update: {
           banner_url?: string
-          created_at?: string | null
+          created_at?: string
           date?: string
           description?: string
           id?: number
@@ -82,30 +77,27 @@ export type Database = {
       }
       links: {
         Row: {
-          created_at: string | null
+          created_at: string
           icon: string
           id: number
           order_index: number
           title: string
-          updated_at: string | null
           url: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           icon: string
           id?: number
           order_index?: number
           title: string
-          updated_at?: string | null
           url: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           icon?: string
           id?: number
           order_index?: number
           title?: string
-          updated_at?: string | null
           url?: string
         }
         Relationships: []
@@ -116,33 +108,30 @@ export type Database = {
           description: string
           id: number
           image_url: string
-          links: ProjectLink[]
+          links: Json | null
           order_index: number
           tags: string[]
           title: string
-          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description: string
           id?: number
           image_url: string
-          links?: ProjectLink[]
+          links?: Json | null
           order_index?: number
           tags?: string[]
           title: string
-          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string
           id?: number
           image_url?: string
-          links?: ProjectLink[]
+          links?: Json | null
           order_index?: number
           tags?: string[]
           title?: string
-          updated_at?: string | null
         }
         Relationships: []
       }

@@ -4,8 +4,9 @@ import { fetchProjects as fetchProjectsDb, createProject, updateProject, deleteP
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pencil, Plus, Save, Trash2, X, ExternalLink, Github, LinkIcon, ChevronUp, ChevronDown } from "lucide-react";
 import { Button, Label, Input, Textarea, LoadingSpinner } from "@/components/index";
+import type { CustomProject, Project, ProjectLink } from "@/utils/types/projects";
+import { Json } from "@/utils/types/database.types";
 import { ProjectLinksManager } from "./project-links-manager";
-import { Project, ProjectLink } from "@/utils/types/projects";
 import { useState, useEffect } from "react";
 import ImageUpload from "./image-upload";
 import Image from "next/image";
@@ -16,8 +17,21 @@ const iconMap: Record<string, React.ReactNode> = {
     external: <ExternalLink size={12} />,
 };
 
+const isProjectLink = (link: any): link is ProjectLink => {
+    return typeof link === 'object' && 
+        link !== null &&
+        'name' in link && 
+        'url' in link && 
+        'icon' in link;
+};
+  
+const safeLinksParse = (links: Json): ProjectLink[] => {
+    if (!links || !Array.isArray(links)) return [];
+    return links.filter(isProjectLink);
+};
+
 export function ProjectsManager() {
-    const [projects, setProjects] = useState<Project[]>([]);
+    const [projects, setProjects] = useState<CustomProject[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState<number | null>(null);
@@ -25,17 +39,31 @@ export function ProjectsManager() {
 
     // Form state
     const [formData, setFormData] = useState<
-        Omit<Project, "id" | "created_at" | "updated_at" | "order_index">
-    >({
-        title: "",
-        description: "",
-        image_url: "",
-        tags: [],
-        links: [],
-    });
+    Omit<CustomProject, "id" | "created_at">
+  >({
+      title: "",
+      description: "",
+      image_url: "",
+      tags: [],
+      links: [],
+      order_index: 0,
+  });
 
     const [imageUploaded, setImageUploaded] = useState(false);
     const [tagsInput, setTagsInput] = useState<string>("")
+
+    const parseProject = (project: Project): CustomProject => ({
+        ...project,
+        links: safeLinksParse(project.links)
+    });
+    
+    const prepareProjectForDB = (
+        project: Omit<CustomProject, "id" | "created_at">
+    ): Omit<Project, "id" | "created_at"> => ({
+        ...project,
+        links: project.links as unknown as Json,
+        order_index: project.order_index ?? 0, // Garante um valor padrão
+    });
 
     useEffect(() => {
         fetchProjects();
@@ -47,7 +75,7 @@ export function ProjectsManager() {
 
         try {
             const data = await fetchProjectsDb();
-            setProjects(data || []);
+            setProjects(data.map(parseProject));
         } catch (err) {
             console.error("Erro ao buscar projetos:", err);
             setError("Não foi possível carregar os projetos. Tente novamente mais tarde.");
@@ -77,19 +105,6 @@ export function ProjectsManager() {
         setFormData((prev) => ({ ...prev, links }));
     };
 
-    const resetForm = () => {
-        setFormData({
-            title: "",
-            description: "",
-            image_url: "",
-            tags: [],
-            links: [],
-        });
-
-        setTagsInput("")
-        setImageUploaded(false);
-    };
-
     const handleCreateProject = async () => {
         if (!formData.image_url) {
             setError("É necessário fazer upload de uma imagem para o projeto.");
@@ -97,18 +112,18 @@ export function ProjectsManager() {
         }
 
         try {
-            // Determinar o maior order_index atual
             const maxOrderIndex = projects.length > 0
-            ? Math.max(...projects.map((exp) => exp.order_index))
-            : -1;
+                ? Math.max(...projects.map((exp) => exp.order_index))
+                : -1;
 
-            const updateData = {
+            const createData = {
                 ...formData,
-                order_index: maxOrderIndex
-            }
-                        
-            const data = await createProject(updateData);
-            setProjects((prev) => [...prev, data[0]]);
+                order_index: maxOrderIndex + 1
+            };
+            
+            const dbData = prepareProjectForDB(createData);
+            const data = await createProject(dbData);
+            setProjects((prev) => [parseProject(data[0]), ...prev]);
             
             resetForm();
             setIsCreating(false);
@@ -125,15 +140,12 @@ export function ProjectsManager() {
         }
 
         try {
-            await updateProject(formData, id);
+            const dbData = prepareProjectForDB(formData);
+            await updateProject(dbData, id);
 
             setProjects((prev) => prev.map((project) =>
-                project.id === id ? { 
-                    ...project, 
-                    ...formData, 
-                    updated_at: new Date().toISOString() 
-                } : project)
-            );
+                project.id === id ? parseProject({ ...project, ...dbData }) : project
+            ));
 
             resetForm();
             setIsEditing(null);
@@ -173,15 +185,16 @@ export function ProjectsManager() {
         newProjects[newIndex].order_index = temp;
 
         // Ordenar pelo order_index
-        newProjects.sort((a, b) => a.order_index - b.order_index);
+        newProjects.sort((a, b) => b.order_index - a.order_index);
 
         // Atualizar o estado
         setProjects(newProjects);
 
         try {
             setError(null);
-            await updateProject({ order_index: newProjects[currentIndex].order_index }, newProjects[currentIndex].id)
-            await updateProject({ order_index: newProjects[newIndex].order_index }, newProjects[newIndex].id)
+
+            await updateProject({ order_index: newProjects[currentIndex].order_index }, newProjects[currentIndex].id);
+            await updateProject({ order_index: newProjects[newIndex].order_index }, newProjects[newIndex].id);
         } catch (err) {
             console.error("Erro ao reordenar projetos:", err);
             setError("Não foi possível reordenar os projetos. Tente novamente mais tarde.");
@@ -193,8 +206,10 @@ export function ProjectsManager() {
 
     const reorderProjects = async () => {
         try {
-            for (let i = 0; i < projects.length; i++) {
-                await updateProject({ order_index: i }, projects[i].id);
+            const sortedProjects = [...projects].sort((a, b) => b.order_index - a.order_index);
+        
+            for (let i = 0; i < sortedProjects.length; i++) {
+                await updateProject({ order_index: sortedProjects.length - 1 - i }, sortedProjects[i].id);
             }
 
             fetchProjects();
@@ -204,19 +219,34 @@ export function ProjectsManager() {
         }
     };
 
-    const startEditing = (project: Project) => {
+    const resetForm = () => {
+        setFormData({
+            title: "",
+            description: "",
+            image_url: "",
+            tags: [],
+            links: [],
+            order_index: 0
+        });
+
+        setTagsInput("")
+        setImageUploaded(false);
+    };
+
+    const startEditing = (project: CustomProject) => {
         setFormData({
             title: project.title,
             description: project.description,
             image_url: project.image_url,
             tags: project.tags,
-            links: project.links || [],
+            links: project.links,
+            order_index: project.order_index
         });
 
-        setTagsInput(project.tags.join(", "))
-        setImageUploaded(true)
-        setIsEditing(project.id)
-        setIsCreating(false)
+        setTagsInput(project.tags.join(", "));
+        setImageUploaded(true);
+        setIsEditing(project.id);
+        setIsCreating(false);
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
@@ -316,7 +346,7 @@ export function ProjectsManager() {
 
                         {/* Novo componente para gerenciar links */}
                         <ProjectLinksManager
-                            links={formData.links || []}
+                            links={formData.links}
                             onChange={handleLinksChange}
                         />
                     </CardContent>

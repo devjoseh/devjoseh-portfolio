@@ -52,18 +52,6 @@ export function HackathonsManager() {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const resetForm = () => {
-        setFormData({
-            title: "",
-            banner_url: "",
-            description: "",
-            date: "",
-            result: null,
-        });
-
-        setImageUploaded(false);
-    };
-
     const handleCreateHackathon = async () => {
         if (!formData.banner_url) {
             setError("É necessário fazer upload de uma imagem para o hackathon.");
@@ -71,8 +59,17 @@ export function HackathonsManager() {
         }
 
         try {
-            const data = await createHackathon(formData)
-            setHackathons((prev) => [...prev, data[0]]);
+            const maxOrderIndex = hackathons.length > 0
+                ? Math.max(...hackathons.map((exp) => exp.order_index))
+                : -1;
+
+            const createData = {
+                ...formData,
+                order_index: maxOrderIndex + 1
+            }
+            
+            const data = await createHackathon(createData)
+            setHackathons((prev) => [data[0], ...prev]);
 
             resetForm();
             setIsCreating(false);
@@ -136,17 +133,16 @@ export function HackathonsManager() {
         newHackathons[newIndex].order_index = temp;
 
         // Ordenar pelo order_index
-        newHackathons.sort((a, b) => a.order_index - b.order_index);
+        newHackathons.sort((a, b) => b.order_index - a.order_index);
 
         // Atualizar o estado
         setHackathons(newHackathons);
 
         try {
             setError(null);
-            await Promise.all([
-                updateHackathon({ order_index: newHackathons[currentIndex].order_index }, newHackathons[currentIndex].id),
-                updateHackathon({ order_index: newHackathons[newIndex].order_index }, newHackathons[newIndex].id)
-            ])
+
+            await updateHackathon({ order_index: newHackathons[currentIndex].order_index }, newHackathons[currentIndex].id);
+            await updateHackathon({ order_index: newHackathons[newIndex].order_index }, newHackathons[newIndex].id);
         } catch (err) {
             console.error("Erro ao reordenar hackathons:", err);
             setError("Não foi possível reordenar os hackathons. Tente novamente mais tarde.");
@@ -158,8 +154,10 @@ export function HackathonsManager() {
 
     const reorderHackathons = async () => {
         try {
-            for (let i = 0; i < hackathons.length; i++) {
-                await updateHackathon({ order_index: i }, hackathons[i].id);
+            const sortedHackathons = [...hackathons].sort((a, b) => b.order_index - a.order_index);
+        
+            for (let i = 0; i < sortedHackathons.length; i++) {
+                await updateHackathon({ order_index: sortedHackathons.length - 1 - i }, sortedHackathons[i].id);
             }
 
             fetchHackathons();
@@ -167,6 +165,18 @@ export function HackathonsManager() {
             console.error("Erro ao reordenar hackathons:", err);
             setError("Não foi possível reordenar os hackathons. Tente novamente mais tarde.");
         }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            title: "",
+            banner_url: "",
+            description: "",
+            date: "",
+            result: null,
+        });
+
+        setImageUploaded(false);
     };
 
     const startEditing = (hackathon: Hackathon) => {
