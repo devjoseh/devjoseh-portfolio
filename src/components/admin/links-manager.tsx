@@ -59,7 +59,9 @@ export function LinksManager() {
 
                 await updateLink(data, currentLink.id)
             } else {
-                const maxOrderIndex = links.length > 0 ? Math.max(...links.map((link) => link.order_index)) : -1;
+                const maxOrderIndex = links.length > 0
+                ? Math.max(...links.map((exp) => exp.order_index))
+                : -1;
 
                 const data = {
                     title: currentLink.title,
@@ -88,7 +90,9 @@ export function LinksManager() {
         try {
             await deleteLink(linkToDelete.id)
 
-            await fetchLinks();
+            setLinks((prev) => prev.filter((experience) => experience.id !== linkToDelete.id));
+
+            reorderLinks();
             setIsDeleteDialogOpen(false);
             setLinkToDelete(null);
         } catch (err) {
@@ -97,40 +101,53 @@ export function LinksManager() {
         }
     };
 
-    const handleMoveLink = async (index: number, direction: "up" | "down") => {
-        if (
-            (direction === "up" && index === 0) ||
-            (direction === "down" && index === links.length - 1)
-        ) {
-            return;
-        }
+    const handleMoveLink = async (id: number, direction: "up" | "down") => {
+        const currentIndex = links.findIndex((exp) => exp.id === id);
+        if (currentIndex === -1) return;
 
+        const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+        // Verificar se o novo índice é válido
+        if (newIndex < 0 || newIndex >= links.length) return;
+
+        // Trocar as posições
         const newLinks = [...links];
-        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        const temp = newLinks[currentIndex].order_index;
+        newLinks[currentIndex].order_index = newLinks[newIndex].order_index;
+        newLinks[newIndex].order_index = temp;
 
-        // Trocar os links de posição
-        [newLinks[index], newLinks[targetIndex]] = [
-            newLinks[targetIndex],
-            newLinks[index],
-        ];
+        // Ordenar pelo order_index
+        newLinks.sort((a, b) => b.order_index - a.order_index);
 
-        // Atualizar os order_index
-        const updatedLinks = newLinks.map((link, i) => ({
-            ...link,
-            order_index: i,
-        }));
-
-        setLinks(updatedLinks);
+        // Atualizar o estado
+        setLinks(newLinks);
 
         try {
-            const [link1, link2] = [updatedLinks[index], updatedLinks[targetIndex]]
+            setError(null);
 
-            await updateLink({ order_index: link1.order_index }, link1.id)
-            await updateLink({ order_index: link2.order_index }, link2.id)
+            await updateLink({ order_index: newLinks[currentIndex].order_index }, newLinks[currentIndex].id);
+            await updateLink({ order_index: newLinks[newIndex].order_index }, newLinks[newIndex].id);
         } catch (err) {
             console.error("Erro ao reordenar links:", err);
             setError("Não foi possível reordenar os links. Tente novamente.");
+
+            // Reverter as mudanças em caso de erro
             fetchLinks();
+        }
+    };
+
+    const reorderLinks = async () => {
+        try {
+            const sortedLinks = [...links].sort((a, b) => b.order_index - a.order_index);
+        
+            for (let i = 0; i < sortedLinks.length; i++) {
+                await updateLink({ order_index: sortedLinks.length - 1 - i }, sortedLinks[i].id);
+            }
+
+            fetchLinks();
+        } catch (err) {
+            console.error("Erro ao reordenar experiências:", err);
+            setError("Não foi possível reordenar as experiências. Tente novamente mais tarde.");
         }
     };
 
@@ -342,7 +359,7 @@ export function LinksManager() {
                                             variant="ghost"
                                             size="icon"
                                             onClick={() =>
-                                                handleMoveLink(index, "up")
+                                                handleMoveLink(link.id, "up")
                                             }
                                             disabled={index === 0}
                                             className="h-8 w-8"
@@ -353,7 +370,7 @@ export function LinksManager() {
                                             variant="ghost"
                                             size="icon"
                                             onClick={() =>
-                                                handleMoveLink(index, "down")
+                                                handleMoveLink(link.id, "down")
                                             }
                                             disabled={
                                                 index === links.length - 1

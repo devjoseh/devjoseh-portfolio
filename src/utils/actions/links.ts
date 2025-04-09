@@ -9,7 +9,7 @@ export async function fetchLinks(): Promise<Link[]> {
     const { data, error } = await supabase
         .from("links")
         .select()
-        .order("order_index", { ascending: true })
+        .order("order_index", { ascending: false })
 
     if (error) throw error;
     return data;
