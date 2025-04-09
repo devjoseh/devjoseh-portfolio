@@ -147,6 +147,7 @@ export function ExperiencesManager() {
 
         try {
             setError(null);
+
             await updateExperience({ order_index: newExperiences[currentIndex].order_index }, newExperiences[currentIndex].id);
             await updateExperience({ order_index: newExperiences[newIndex].order_index }, newExperiences[newIndex].id);
         } catch (err) {

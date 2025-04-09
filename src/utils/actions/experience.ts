@@ -9,8 +9,7 @@ export async function fetchExperiences(): Promise<Experience[]> {
     const { data, error } = await supabase
         .from("experiences")
         .select()
-        .order("order_index", { ascending: true })
-        .order("created_at", { ascending: false })
+        .order("order_index", { ascending: false })
 
     if (error) throw error;
     return data;
