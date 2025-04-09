@@ -182,7 +182,7 @@ export function LinksManager() {
                             Novo Link
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[500px]">
+                    <DialogContent className="sm:max-w-[500px] w-[calc(100%-2rem)] max-w-full mx-auto overflow-hidden">
                         <DialogHeader>
                             <DialogTitle>
                                 {currentLink?.id ? "Editar Link" : "Novo Link"}
@@ -230,14 +230,14 @@ export function LinksManager() {
                                             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-[300px] p-0">
+                                    <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0">
                                         <Command>
                                             <CommandInput
                                                 placeholder="Buscar ícone..."
                                                 value={iconSearch}
                                                 onValueChange={setIconSearch}
                                             />
-                                            <CommandList className="max-h-[300px] overflow-auto">
+                                            <CommandList className="max-h-[300px] overflow-y-auto">
                                                 <CommandEmpty>
                                                     Nenhum ícone encontrado.
                                                 </CommandEmpty>
@@ -323,7 +323,7 @@ export function LinksManager() {
                     {links.map((link, index) => (
                         <Card key={link.id} className="border bg-[#2C3953]/50">
                             <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className="bg-primary/10 p-2 rounded-md">
                                             <DynamicIcon name={link.icon} />
@@ -337,7 +337,7 @@ export function LinksManager() {
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 self-end sm:self-auto">
                                         <Button
                                             variant="ghost"
                                             size="icon"
